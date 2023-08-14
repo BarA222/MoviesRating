@@ -1,113 +1,58 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using MovieApi.Models;
+using MovieApi.Repositories;
 
 namespace MovieApi.Controllers
 {
     [Route("[controller]")]
     public class MoviesController : ControllerBase
     {
-        private readonly MovieContext _context;
+        private readonly MoviesRepo _moviesRepo;
 
-        public MoviesController(MovieContext context)
+        public MoviesController(MoviesRepo moviesRepo)
         {
-            _context = context;
+            _moviesRepo = moviesRepo;
         }
 
         // GET: api/movies
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Movie>>> GetMovies()
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IEnumerable<Movie>> GetMovies()
         {
-            return await _context.Movies.ToListAsync();
+            return await _moviesRepo.GetMoviesAsync();
         }
 
         // GET: api/movies/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Movie>> GetMovie(int id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<Movie>> GetMovie(Guid id)
         {
-            var movie = await _context.Movies.FindAsync(id);
-
-            if (movie == null)
-            {
-                return NotFound();
-            }
-
-            return movie;
+           return await _moviesRepo.GetMovieAsync(id);
         }
 
          // POST: api/movies
         [HttpPost]
-        public async Task<ActionResult<Movie>> CreateMovie([FromBody] Movie movie)
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        public async Task<ActionResult<Guid>> CreateMovie([FromBody] Movie movie)
         {
-            var movieExist = await _context.Movies
-                .Where(x => x.Title == movie.Title)
-                .FirstOrDefaultAsync();
-
-            if(movieExist != null) return new ConflictResult();
-
-
-            var newMovie = new Movie
-            {
-                Id = Guid.NewGuid(),
-                Genre = movie.Genre,
-                Rating = movie.Rating,
-                Title = movie.Title,
-                Year = movie.Year,
-            };
-
-            _context.Movies.Add(newMovie);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetMovie), new { id = newMovie.Id }, $"Id: {newMovie.Id}" );
+           return await _moviesRepo.CreateMovieAsync(movie.Title, movie.Genre, movie.Year, movie.Rating);
         }
 
         // PUT: api/movies/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateMovie(
-            [FromRoute]Guid id, [FromBody] Movie movie)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task UpdateMovie([FromRoute]Guid id, [FromBody] Movie movie)
         {
-                var movieExist = await _context.Movies
-                .Where(x => x.Title == movie.Title)
-                .FirstOrDefaultAsync();
-
-            if(movieExist != null) return new ConflictResult();
-            
-           var movieResult = await _context.Movies.FindAsync(id);
-
-            if (movieResult == null) return new NotFoundResult();
-
-            movieResult.Genre =movie.Genre;
-            movieResult.Rating = movie.Rating;
-            movieResult.Title = movie.Title;
-            movieResult.Year = movie.Year;
-
-            await _context.SaveChangesAsync();
-
-            return Ok();
+             await _moviesRepo.UpdateMovieAsync(id, movie.Title, movie.Genre, movie.Year, movie.Rating);
         }
 
         // DELETE: api/movies/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMovie(Guid id)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task DeleteMovie(Guid id)
         {
-            var movie = await _context.Movies.FindAsync(id);
-            if (movie == null)
-            {
-                return NotFound();
-            }
-
-            _context.Movies.Remove(movie);
-            await _context.SaveChangesAsync();
-
-            return Ok();
+            await _moviesRepo.DeleteMovieAsync(id);
         }
-
       
     }
 

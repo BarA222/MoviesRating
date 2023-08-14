@@ -6,33 +6,26 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using MovieApi.Models;
+using MovieApi.Repositories;
 
 namespace MovieApi.Controllers
 {
     [Route("[controller]")]
     public class MovieRatingsController : ControllerBase
     {
-       private readonly MovieContext _context;
+       private readonly MoviesRepo _moviesRepo;
 
-        public MovieRatingsController(MovieContext context)
+        public MovieRatingsController(MoviesRepo moviesRepo)
         {
-            _context = context;
+            _moviesRepo = moviesRepo;
         }
 
         // POST: api/movieratings/rate/5
         [HttpPost("rate/{id}")]
-        public async Task<IActionResult> RateMovie(int id, [FromBody] double rating)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task RateMovie([FromRoute]Guid id, [FromBody] Movie movie)
         {
-            var movie = await _context.Movies.FindAsync(id);
-            if (movie == null)
-            {
-                return NotFound();
-            }
-
-            movie.Rating = rating;
-            await _context.SaveChangesAsync();
-
-            return Ok();
+            await _moviesRepo.RateMovieAsync(id, movie.Rating);
         }
     }
 }

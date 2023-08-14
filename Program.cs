@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MovieApi.Models;
+using MovieApi.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddScoped<MoviesRepo>();
 
 string connStr = builder.Configuration.GetConnectionString("MovieContext");
 
